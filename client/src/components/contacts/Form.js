@@ -30,7 +30,7 @@ const Form = () => {
                 type: 'personal'            
             })           
         }
-    }, [current, contactContext])
+    }, [current])
     
     const onChange = (e) => {
         const { value, name } = e.target

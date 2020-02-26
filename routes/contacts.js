@@ -14,7 +14,7 @@ router.get('/', auth, async (req,res) => {
         // we have access to the user id from the token.
         //  sort({date:-1}) sorts the records in ascending order of date.
         const contacts = await Contact.find({ user: req.user.id }).sort({date: -1})
-        res.json(contacts)
+        return res.json(contacts)
     } catch (err) {
         console.error(err.message)
         res.status(500).send("Errored while fetching contacts details")
@@ -46,10 +46,10 @@ router.post('/', [ auth, [
         })
     
         const contact = await newContact.save()
-        res.json(contact)        
+        return res.json(contact)        
     } catch (err) {
         console.error(err.message)
-        res.status(500).send("Server error")  
+        return res.status(500).send("Server error")  
     }
 })
 
@@ -66,12 +66,11 @@ router.put('/:id', auth, async (req,res) => {
     if (name) contactFields.name = name
     if (email) contactFields.email = email
     if (phone) contactFields.phone = phone
-    if (type) contactFields.name = type
+    if (type) contactFields.type = type
 
     try {
         // req.params.id contains the id of the user that is passed along with the url
        let contact = await Contact.findById(req.params.id) 
-       console.log(contact)
        if (!contact) {
            return res.status(401).json({msg:"Contact/User not found"})
        }
@@ -94,6 +93,7 @@ router.put('/:id', auth, async (req,res) => {
 // @access  private
 
 router.delete('/:id', auth, async (req,res) => {
+
     try {
         // req.params.id contains the id of the user that is passed along with the url
        let contact = await Contact.findById(req.params.id) 
@@ -108,10 +108,10 @@ router.delete('/:id', auth, async (req,res) => {
        }
 
        await Contact.findByIdAndRemove(req.params.id)
-       res.json({ msg: "Contact removed "})
+       return res.json({ msg: "Contact removed "})
     } catch (err) {
         console.error(err.message)
-        res.status(500).send("Server error")         
+        return res.status(500).send("Server error")         
     }
 })
 module.exports= router

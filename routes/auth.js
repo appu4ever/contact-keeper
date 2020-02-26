@@ -18,10 +18,9 @@ router.get('/', auth, async (req,res) => {
         // We hit this route after we successfully login pass through the middleware that sets
         // the request object. So the id is within the user object within the request
         const user = await User.findById(req.user.id).select("-password") 
-        res.json(user)
+        return res.json(user)
     } catch (err) {
-        console.error(err.message)
-        res.status(500).json({ error: err.message })
+        return res.status(500).send('Server error')
     }
     
 })
@@ -40,35 +39,41 @@ router.post('/', [
         return res.status(500).json({errors: errors.array()})
     }
     
-    // Validated, so retrieve email and password from request body
-    const { email, password } = req.body
+    try {
+        // Validated, so retrieve email and password from request body
+        const { email, password } = req.body
 
-    // Access the record from the database that has the same email and the one in the request
-    let user = await User.findOne({ email })
-
-    if (!user) {
-        return res.status(500).json({ msg : "Invalid credentials"})
-    }
-
-    // Check if the password in the request body matches the one in the record from db
-    const isMatch = bcrypt.compare(password, user.password)
-
-    if (!isMatch) {
-        return res.status(500).json({ msg: "Invalid credentials"})
-    }
-
-    // Create a payload that contains the validated user to be sent as a token
-    const payload = {
-        user: {
-            id: user.id
+        // Access the record from the database that has the same email and the one in the request
+        let user = await User.findOne({ email })
+        if (!user) {
+            // return res.status(500).json({ msg : "Invalid credentials"})
+            return res.status(500).send('Invalid credentials')
         }
+    
+        // Check if the password in the request body matches the one in the record from db
+        const isMatch = await bcrypt.compare(password, user.password)
+        
+        if (!isMatch) {
+            // return res.status(500).json({ msg: "Invalid credentials"})
+            return res.status(500).send('Invalid credentials')
+        }
+    
+        // Create a payload that contains the validated user to be sent as a token
+        const payload = {
+            user: {
+                id: user.id
+            }
+        }
+    
+        // Send the token with the payload. The payload resides in the header of the request
+        // The payload user object is accessed using middleware
+        jwt.sign(payload, config.get('jwtSecret'), { expiresIn : 36000}, (err, token) => {
+            if (err) throw err
+            res.json( {token} )
+        })       
+    } catch (err) {
+        return res.status(500).send('Server error')
     }
 
-    // Send the token with the payload. The payload resides in the header of the request
-    // The payload user object is accessed using middleware
-    jwt.sign(payload, config.get('jwtSecret'), { expiresIn : 36000}, (err, token) => {
-        if (err) throw err
-        res.json( {token} )
-    })
 })
 module.exports= router

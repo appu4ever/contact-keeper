@@ -4,7 +4,7 @@ import contactContext from '../../context/contact/contactContext'
 const ContactFilter = () => {
     const context = useContext(contactContext)
     const text = useRef('')
-    console.log(text.current)
+
     useEffect(() => {
         if (context.filtered === null) {
             text.current.value= ''
